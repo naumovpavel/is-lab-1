@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Space Marine</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script th:src="@{/resources/load-chapter.js}"></script>
+    <script th:src="@{/resources/load-coordinates.js}"></script>
+</head>
+<body>
+<div class="header">
+    <a href="/">Главная</a>
+    <span th:text="${username}"></span>
+    <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+        <button type="submit">Logout</button>
+    </form>
+</div>
+
+<h1>Add Space Marine</h1>
+
+<form class="form" th:action="@{/space-marines/add}" th:object="${spaceMarine}" method="post">
+    <label for="name">Name:</label>
+    <input type="text" id="name" th:field="*{name}" required />
+
+    <label for="chapter">Chapter:</label>
+    <select id="chapter" th:field="*{chapter.id}" required>
+        <option th:each="chapter : ${chapters}" th:value="${chapter.id}" th:text="${chapter.name}"></option>
+    </select>
+    <button id="load-more-btn">Load more chapters</button>
+
+
+    <label for="coordinates">Coordinates:</label>
+    <select id="coordinates" th:field="*{coordinates.id}" required>
+        <option th:each="coordinates : ${coordinates}" th:value="${coordinates.id}" th:text="@{x={x}, y={y}(x=${coordinates.x}, y=${coordinates.y})}"></option>
+    </select>
+    <button id="load-more-coordinates-btn">Load more coordinates</button>
+
+    <label for="health">Health:</label>
+    <input type="number" id="health" th:field="*{health}" required />
+
+    <label for="health">Height:</label>
+    <input type="number" id="height" th:field="*{height}" required />
+
+    <label for="category">Category:</label>
+    <select id="category" th:field="*{category}" required>
+        <option th:each="category : ${T(com.wiftwift.entity.AstartesCategory).values()}"
+                th:value="${category}" th:text="${category}"></option>
+    </select>
+
+    <label for="weaponType">Weapon Type:</label>
+    <select id="weaponType" th:field="*{weaponType}" required>
+        <option th:each="weapon : ${T(com.wiftwift.entity.Weapon).values()}"
+                th:value="${weapon}" th:text="${weapon}"></option>
+    </select>
+
+    <button type="submit">Add Space Marine</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>coordinates</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script th:src="@{/resources/coordinates.js}"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+
+
+<h1>Coordinates</h1>
+    <table>
+        <thead>
+            <tr>
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}"><a  th:href="@{/coordinates?sortBy=name&sortDirection=asc}">X</a></th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}"><a  th:href="@{/coordinates?sortBy=name&sortDirection=desc}">X</a></th>
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}"><a  th:href="@{/coordinates?sortBy=world&sortDirection=asc}">Y</a></th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}"><a  th:href="@{/coordinates?sortBy=world&sortDirection=desc}">Y</a></th>
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}"><a  th:href="@{/coordinates?sortBy=owner.username&sortDirection=asc}">Owner</a></th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}"><a  th:href="@{/coordinates?sortBy=owner.username&sortDirection=desc}">Owner</a></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="coordinate : ${coordinatesPage.content}">
+                <td th:text="${coordinate.x}"></td>
+                <td th:text="${coordinate.y}"></td>
+                <td>
+                    <a th:href="@{/coordinates/edit/{id}(id=${coordinate.id})}">Edit</a>
+                    <form th:action="@{/coordinates/delete/{id}(id=${coordinate.id})}" method="post" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    
+    <div>
+        <span>Page <strong th:text="${coordinatesPage.number + 1}"></strong> of <strong th:id = "last-page" th:text="${coordinatesPage.totalPages}"></strong></span>
+        <br/>
+        <a th:href="@{/coordinates?page=0}">Первая</a>
+        <a th:href="@{/coordinates?page={page}(page=${coordinatesPage.number - 1})}" th:if="${coordinatesPage.hasPrevious()}">Предыдущая</a>
+        <a th:href="@{/coordinates?page={page}(page=${coordinatesPage.number + 1})}" th:if="${coordinatesPage.hasNext()}">Следующая</a>
+        <a th:href="@{/coordinates?page={page}(page=${coordinatesPage.totalPages - 1})}" th:if="${coordinatesPage.hasNext()}">Последняя</a>
+    </div>
+
+    <a href="/coordinates/new">Add new</a>
+</body>
+</html>

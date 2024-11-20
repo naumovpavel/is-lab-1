@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Настройки</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    <h1>Настройки пользователя</h1>
+    <h2>Добро пожаловать, <span th:text="${username}">Пользователь</span>!</h2>
+
+    <div>
+        <p><a href="#" th:href="@{/}">Домой</a></p>
+    </div>
+
+    
+    <div th:if="${userRequest}">
+        <p>Вы уже подали заявку на получение админских прав. Статус: <span th:text="${userRequest.status}">Статус</span>.</p>
+    </div>
+
+    
+    <div th:if="${userRequest == null && !isAdmin}">
+        <form action="#" th:action="@{/settings/request-admin-role}" method="post">
+            <button type="submit">Подать заявку на получение админских прав</button>
+        </form>
+    </div>
+
+    
+    <div th:if="${isAdmin}">
+        <p>У вас есть админские права.</p>
+    </div>
+</body>
+</html>

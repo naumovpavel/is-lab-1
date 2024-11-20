@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chapters</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script th:src="@{/resources/chapter.js}"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+<h1>Орден</h1>
+
+    <form th:action="@{/chapters}" method="get" style="margin-bottom: 20px;">
+        <label for="columnSelector">Выберите колонку для фильтрации:</label>
+        <select id="columnSelector" name="columnName">
+            <option value="name">Name</option>
+            <option value="world">World</option>
+        </select>
+        <label for="searchValue">Введите значение:</label>
+        <input type="text" id="searchValue" name="searchValue" />
+        <button type="submit">Фильтровать</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/chapters?sortBy=name&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Name</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/chapters?sortBy=name&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Name</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/chapters?sortBy=world&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">World</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/chapters?sortBy=world&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">World</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/chapters?sortBy=marinesCount&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Marines count</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/chapters?sortBy=marinesCount&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Marines count</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/chapters?sortBy=owner.username&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Owner</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/chapters?sortBy=owner.username&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Owner</a>
+                </th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:id="${chapter.id}" th:each="chapter : ${chapterPage.content}">
+                <td th:text="${chapter.name}"></td>
+                <td th:text="${chapter.world}"></td>
+                <td th:text="${chapter.marinesCount}"></td>
+                <td th:text="${chapter.owner.username}"></td>
+                <td>
+                    <a th:href="@{/chapters/edit/{id}(id=${chapter.id})}">Редактировать</a>
+                    <a th:href="@{/space-marines/setChapter/{id}(id=${chapter.id})}">Add to space marine</a>
+                    <form th:action="@{/chapters/delete/{id}(id=${chapter.id})}" method="post" style="display:inline;">
+                        <button type="submit">Удалить</button>
+                    </form>
+                    <a th:href="@{/chapters/{chapterId}(chapterId=${chapter.id})}">Космодесантники</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    
+    <div>
+        <span>Страница <strong th:text="${chapterPage.number + 1}"></strong> из <strong th:id = "last-page" th:text="${chapterPage.totalPages}"></strong></span>
+        <br/>
+        <a th:href="@{/chapters?page=0}">Первая</a>
+        <a th:href="@{/chapters?page={page}(page=${chapterPage.number - 1})}" th:if="${chapterPage.hasPrevious()}">Предыдущая</a>
+        <a th:href="@{/chapters?page={page}(page=${chapterPage.number + 1})}" th:if="${chapterPage.hasNext()}">Следующая</a>
+        <a th:href="@{/chapters?page={page}(page=${chapterPage.totalPages - 1})}" th:if="${chapterPage.hasNext()}">Последняя</a>
+    </div>
+
+    <a href="/chapters/new">Добавить новый орден</a>
+</body>
+</html>

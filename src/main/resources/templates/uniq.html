@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script th:src="@{/resources/coordinates.js}"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+
+
+<h1>Unique health values</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Health</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="health : ${uniqueHealth}">
+                <td th:text="${health}"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Chapter</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    <h1>Edit Chapter</h1>
+    
+    <form class="form" th:action="@{/chapters/edit}" th:object="${chapter}" method="post">
+        <input type="hidden" th:field="*{id}" />
+        
+        <label for="name">Chapter Name:</label>
+        <input type="text" id="name" th:field="*{name}" required />
+        <br/>
+        
+        <label for="world">World:</label>
+        <input type="text" id="world" th:field="*{world}" required />
+        <br/>
+
+        <br/>
+        <label for="marinesCount">Marines count:</label>
+        <input type="number" id="marinesCount" th:field="*{marinesCount}" required min="0" max="1000" />
+        <br/>
+        
+        <button type="submit">Update Chapter</button>
+    </form>
+</body>
+</html>

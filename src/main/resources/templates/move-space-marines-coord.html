@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Move Space Marines</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="header">
+    <a href="/">Главная</a>
+    <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: none;"></form>
+</div>
+    <h1>Move Space Marines</h1>
+    
+    <h2>Space Marines in Coordinate: <span th:text="x=${coordinate.x}, y=${coordinate.y}"></span></h2>
+    
+    <form th:action="@{/coordinates/move-space-marines/{id}(id=${coordinate.id})}" method="post">
+        <div th:each="spaceMarine : ${spaceMarines}">
+            <input type="checkbox" th:value="${spaceMarine.id}" th:id="'sm-' + ${spaceMarine.id}" name="spaceMarineIds"/>
+            <label th:for="'sm-' + ${spaceMarine.id}" th:text="${spaceMarine.name}"></label>
+        </div>
+
+        <label for="newCoordinate">Select New Coordinate:</label>
+        <select id="newCoordinate" name="newCoordinateId" required>
+            <option th:each="coordinate : ${coordinates}" th:value="${coordinate.id}" th:text="x=${coordinate.x}, y=${coordinate.y}"></option>
+        </select>
+        <br/>
+        
+        <button type="submit">Move Selected Space Marines</button>
+    </form>
+</body>
+</html>

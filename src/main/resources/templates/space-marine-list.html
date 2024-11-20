@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Космодесантники</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <script th:src="@{/resources/space-marine.js}"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    <h1>Space marines</h1>
+    <form th:action="@{/space-marines}" method="get" style="margin-bottom: 20px;">
+        <label for="columnSelector">Выберите колонку для фильтрации:</label>
+        <select id="columnSelector" name="columnName">
+            <option value="name">name</option>
+        </select>
+        <label for="searchValue">Введите значение:</label>
+        <input type="text" id="searchValue" name="searchValue" />
+        <button type="submit">Фильтровать</button>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=name&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Name</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=name&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Name</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=health&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Health</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=health&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Health</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=height&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Height</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=height&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Height</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=coordinates.x&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">X</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=coordinates.x&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">X</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=coordinates.y&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Y</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=coordinates.y&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Y</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=chapter.name&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Chapter name</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=chapter.name&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Chapter name</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=owner.username&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Owner</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=owner.username&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Owner</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=category&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Category</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=category&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Category</a>
+                </th>
+
+                <th th:if="${(param.sortDirection == null) or (param.sortDirection[0] != 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=weaponType&sortDirection=asc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Weapon Type</a>
+                </th>
+                <th th:if="${(param.sortDirection != null) and (param.sortDirection[0] == 'asc')}">
+                    <a th:href="@{/space-marines?sortBy=weaponType&sortDirection=desc&columnName={cn}&searchValue={sv}(cn=${param.columnName == null ? '' : param.columnName[0]}, sv=${param.searchValue == null ? '' : param.searchValue[0]})}">Weapon Type</a>
+                </th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="marine : ${spaceMarinePage.content}">
+                <td th:text="${marine.name}"></td>
+                <td th:text="${marine.health}"></td>
+                <td th:text="${marine.height}"></td>
+                <td th:text="${marine.coordinates.x}"></td>
+                <td th:text="${marine.coordinates.y}"></td>
+                <td th:if="${marine.chapter != null}" th:text="${marine.chapter.name}"></td>
+                <td th:if="${marine.chapter == null}">has no chapters</td>
+                <td th:text="${marine.owner.username}"></td>
+                <td th:text="${marine.category}"></td>
+                <td th:text="${marine.weaponType}"></td>
+                <td>
+                    <a th:href="@{/space-marines/edit/{id}(id=${marine.id})}">Редактировать</a>
+                    <form th:action="@{/space-marines/delete/{id}(id=${marine.id})}" method="post" style="display:inline;">
+                        <button type="submit">Удалить</button>
+                    </form>
+                    <form th:action="@{/space-marines/unsetChapter/{id}(id=${marine.id})}" method="post" style="display:inline;">
+                        <button type="submit">Паспустить</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    
+    <div>
+        <span>Страница <strong th:text="${spaceMarinePage.number + 1}"></strong> из <strong th:id = "last-page" th:text="${spaceMarinePage.totalPages}"></strong></span>
+        <br/>
+        <a th:href='@{/space-marines?page=0'>Первая</a>
+        <a th:href="@{/space-marines?page={page}(page=${chapterPage.number - 1})}" th:if="${spaceMarinePage.hasPrevious()}">Предыдущая</a>
+        <a th:href="@{/space-marines?page={page}(page=${chapterPage.number + 1})}" th:if="${spaceMarinePage.hasNext()}">Следующая</a>
+        <a th:href="@{/space-marines?page={page}(page=${chapterPage.totalPages - 1})}" th:if="${spaceMarinePage.hasNext()}">Последняя</a>
+    </div>
+    
+    <a href="/space-marines/add">Add new</a>
+</body>
+</html>

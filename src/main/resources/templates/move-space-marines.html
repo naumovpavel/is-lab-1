@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Move Space Marines</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="header">
+    <a href="/">Главная</a>
+    <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: none;"></form>
+</div>
+    <h1>Move Space Marines</h1>
+    
+    <h2>Space Marines in Chapter: <span th:text="${chapter.name}"></span></h2>
+    
+    <form th:action="@{/chapters/move-space-marines/{id}(id=${chapter.id})}" method="post">
+        <div th:each="spaceMarine : ${spaceMarines}">
+            <input type="checkbox" th:value="${spaceMarine.id}" th:id="'sm-' + ${spaceMarine.id}" name="spaceMarineIds"/>
+            <label th:for="'sm-' + ${spaceMarine.id}" th:text="${spaceMarine.name}"></label>
+        </div>
+
+        <label for="newChapter">Select New Chapter:</label>
+        <select id="newChapter" name="newChapterId" required>
+            <option th:each="chapter : ${chapters}" th:value="${chapter.id}" th:text="${chapter.name}"></option>
+        </select>
+        <br/>
+        
+        <button type="submit">Move Selected Space Marines</button>
+    </form>
+</body>
+</html>

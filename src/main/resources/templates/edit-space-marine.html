@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Space Marine</title>
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script th:src="@{/resources/load-chapter.js}"></script>
+    <script th:src="@{/resources/load-coordinates.js}"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    <h1>Edit Space Marine</h1>
+    
+    <form class="form" th:action="@{/space-marines/edit}" th:object="${spaceMarine}" method="post">
+        <input type="hidden" th:field="*{id}" />
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" th:field="*{name}" required />
+        <br/>
+
+        <label for="chapter">Chapter:</label>
+        <select id="chapter" th:field="*{chapter.id}" required>
+            <option th:each="chapter : ${chapters}" 
+                    th:value="${chapter.id}" 
+                    th:text="${chapter.name}" 
+                    th:selected="${chapter.id == spaceMarine.chapter.id}"></option>
+        </select>
+        <button id="load-more-space-marines-btn">Load more chapters</button>
+        <br/>
+
+        <button type="submit">USet chapter</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link th:href="@{/resources/style.css}" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script th:src="@{/resources/load-space-marine.js}"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="/">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    <h1>Set chapter to space marine</h1>
+    
+    <form class="form" th:action="@{/space-marines/setChapter}" method="post">
+        <input type="hidden" th:name="chapterID" th:value="${chapter.id}" />
+
+        <label for="space-marines">Space marine:</label>
+        <select id="space-marines" th:name="spaceMarineID" required>
+            <option th:each="spaceMarine : ${spaceMarines}"
+                    th:value="${spaceMarine.id}"
+                    th:text="${spaceMarine.name}">
+            </option>
+        </select>
+        <button id="load-more-space-marines-btn">Load more space marines</button>
+        <br/>
+
+        <button type="submit">Set chapter</button>
+    </form>
+</body>
+</html>

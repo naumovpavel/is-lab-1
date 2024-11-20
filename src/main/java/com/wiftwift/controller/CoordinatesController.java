@@ -98,32 +98,50 @@ public class CoordinatesController {
     }
 
     @PostMapping("/edit")
-    public String updateCoordinates(@Valid @ModelAttribute Coordinates coordinates, Authentication authentication) {
-        Coordinates oldCoordinates = coordinatesService.getCoordinatesById(coordinates.getId());
+    public String updateCoordinates(@Valid @ModelAttribute Coordinates coordinates, Authentication authentication, Model model) {
+        try {
+            Coordinates oldCoordinates = coordinatesService.getCoordinatesById(coordinates.getId());
 
-        String username = authentication.getName();
-        if (!oldCoordinates.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to edit this Coordinates");
+            String username = authentication.getName();
+            if (!oldCoordinates.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+                throw new AccessDeniedException("You do not have permission to edit this Coordinates");
+            }
+
+            User user = userService.findByUsername(username).orElseThrow();
+            coordinates.setOwner(user);
+
+            coordinatesService.saveCoordinates(coordinates);
+
+            return "redirect:/coordinates";
+        } catch (java.lang.NullPointerException e) {
+            model.addAttribute("error", "Упс, кто-то удалил");
+            return "error";
+        }  catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "error";
         }
 
-        User user = userService.findByUsername(username).orElseThrow();
-        coordinates.setOwner(user);
-
-        coordinatesService.saveCoordinates(coordinates);
-
-        return "redirect:/coordinates";
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteCoordinates(@PathVariable("id") int id, Authentication authentication) {
-        Coordinates coordinates = coordinatesService.getCoordinatesById(id);
+    public String deleteCoordinates(@PathVariable("id") int id, Authentication authentication, Model model) {
+        try {
+            Coordinates coordinates = coordinatesService.getCoordinatesById(id);
 
-        String username = authentication.getName();
-        if (!coordinates.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to delete this Coordinates");
+            String username = authentication.getName();
+            if (!coordinates.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+                throw new AccessDeniedException("You do not have permission to delete this Coordinates");
+            }
+
+            coordinatesService.deleteCoordinates(id);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
+            return "error";
+
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "error";
         }
-
-        coordinatesService.deleteCoordinates(id);
 
         return "redirect:/coordinates";
     }

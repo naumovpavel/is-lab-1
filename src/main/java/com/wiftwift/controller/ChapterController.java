@@ -1,5 +1,6 @@
 package com.wiftwift.controller;
 
+import com.wiftwift.entity.Coordinates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -113,33 +114,49 @@ public class ChapterController {
     }
 
     @PostMapping("/edit")
-    public String updateChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication) {
-        Chapter oldChapter = chapterService.getChapterById(chapter.getId());
+    public String updateChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication, Model model) {
+        try {
+            Chapter oldChapter = chapterService.getChapterById(chapter.getId());
 
-        String username = authentication.getName();
-        if (!oldChapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to edit this chapter");
+            String username = authentication.getName();
+            if (!oldChapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+                throw new AccessDeniedException("You do not have permission to edit this chapter");
+            }
+
+            chapter.setOwner(oldChapter.getOwner());
+            chapterService.saveChapter(chapter);
+
+            return "redirect:/chapters";
+        }  catch (java.lang.NullPointerException e) {
+            model.addAttribute("error", "Упс, кто-то удалил");
+            return "error";
+        }  catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "error";
         }
-
-        chapter.setOwner(oldChapter.getOwner());
-        chapterService.saveChapter(chapter);
-
-        return "redirect:/chapters";
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteChapter(@PathVariable("id") int id, Authentication authentication) {
-        
-        Chapter chapter = chapterService.getChapterById(id);
+    public String deleteChapter(@PathVariable("id") int id, Authentication authentication, Model model) {
+        try {
+            Chapter chapter = chapterService.getChapterById(id);
 
-        
-        String username = authentication.getName();
-        if (!chapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to delete this chapter");
+
+            String username = authentication.getName();
+            if (!chapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+                throw new AccessDeniedException("You do not have permission to delete this chapter");
+            }
+
+            chapterService.deleteChapter(id);
+
+            return "redirect:/chapters";
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
+            return "error";
+
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "error";
         }
-
-        chapterService.deleteChapter(id);
-
-        return "redirect:/chapters"; 
     }
 }

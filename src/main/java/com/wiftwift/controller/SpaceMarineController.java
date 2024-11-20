@@ -125,6 +125,9 @@ public class SpaceMarineController {
     
     @PostMapping("/add")
     public String addSpaceMarine(@ModelAttribute SpaceMarine spaceMarine, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userService.findByUsername(username).orElseThrow();
+        spaceMarine.setOwner(user);
         spaceMarineService.saveSpaceMarine(spaceMarine);
         return "redirect:/space-marines"; 
     }
@@ -144,18 +147,27 @@ public class SpaceMarineController {
 
     
     @PostMapping("/edit")
-    public String updateSpaceMarine(@ModelAttribute SpaceMarine spaceMarine, Authentication authentication) {
-        SpaceMarine oldSpaceMarine = spaceMarineService.getSpaceMarineById(spaceMarine.getId());
+    public String updateSpaceMarine(@ModelAttribute SpaceMarine spaceMarine, Authentication authentication, Model model) {
+        try {
 
-        String username = authentication.getName();
-        if (!oldSpaceMarine.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to edit this chapter");
+            SpaceMarine oldSpaceMarine = spaceMarineService.getSpaceMarineById(spaceMarine.getId());
+
+            String username = authentication.getName();
+            if (!oldSpaceMarine.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+                throw new AccessDeniedException("You do not have permission to edit this chapter");
+            }
+
+            spaceMarine.setOwner(oldSpaceMarine.getOwner());
+
+            spaceMarineService.saveSpaceMarine(spaceMarine);
+            return "redirect:/space-marines";
+        }  catch (java.lang.NullPointerException e) {
+            model.addAttribute("error", "Упс, кто-то удалил");
+            return "error";
+        }  catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "error";
         }
-
-        spaceMarine.setOwner(oldSpaceMarine.getOwner());
-
-        spaceMarineService.saveSpaceMarine(spaceMarine); 
-        return "redirect:/space-marines"; 
     }
 
     @GetMapping("/setChapter/{id}")

@@ -3,6 +3,7 @@ package com.wiftwift.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,15 +35,11 @@ public class SettingsController {
         User user = userService.findByUsername(username).orElseThrow();
 
         model.addAttribute("username", username);
-
-        
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> role.getName().equals("ADMIN"));
         
-        System.out.println("User roles:");
         user.getRoles().forEach(role -> System.out.println(role.getName()));
         model.addAttribute("isAdmin", isAdmin);
-
         
         Optional<Request> userRequest = requestService.getUserRequest(user.getId());
         model.addAttribute("username", authentication.getName());
@@ -51,12 +48,13 @@ public class SettingsController {
         return "settings";
     }
 
+    @Transactional
     @PostMapping("/settings/request-admin-role")
     public String submitRequest(Authentication authentication) {
         String username = authentication.getName();
         User user = userService.findByUsername(username).orElseThrow();
 
-        boolean isAdmin = userService.getAllAdmins().size() > 0;
+        boolean isAdmin = !userService.getAllAdmins().isEmpty();
 
         if (!isAdmin) {
             if (roleService.findByName("ADMIN").isEmpty()) {
@@ -67,7 +65,6 @@ public class SettingsController {
             user.getRoles().add(roleService.findByName("ADMIN").get()); 
             userService.save(user); 
         } else {
-            
             requestService.submitRequest(user.getId());
         }
 

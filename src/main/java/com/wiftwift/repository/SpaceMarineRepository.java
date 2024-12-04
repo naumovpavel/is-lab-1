@@ -1,6 +1,5 @@
 package com.wiftwift.repository;
 
-import com.wiftwift.dto.CategoryCountDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -31,7 +31,6 @@ public class ChapterService {
 
     public Chapter saveChapter(Chapter chapter) {
         var savedChapter = chapterRepository.save(chapter);
-        System.out.println("saved, now sending");
         template.convertAndSend("/topic/chapters", savedChapter);
         return savedChapter;
     }

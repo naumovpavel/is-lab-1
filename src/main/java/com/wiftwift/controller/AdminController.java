@@ -3,6 +3,7 @@ package com.wiftwift.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -33,12 +34,11 @@ public class AdminController {
 
     @GetMapping("/requests")
     public String showRequests(Model model, Authentication authentication) {
-        
         boolean isAdmin = userService.isAdmin(authentication.getName());
-
         if (!isAdmin) {
             return "redirect:/settings"; 
         }
+
         List<Request> requests = requestService.getAllRequests();
         model.addAttribute("requests", requests);
         model.addAttribute("username", authentication.getName());
@@ -46,6 +46,7 @@ public class AdminController {
         return "admin-requests"; 
     }
 
+    @Transactional
     @PostMapping("/requests/accept")
     public String acceptRequest(@ModelAttribute RequestDto requestDto) {
         Long requestId = requestDto.getRequestId();
@@ -53,6 +54,7 @@ public class AdminController {
         return "redirect:/admin/requests"; 
     }
 
+    @Transactional
     @PostMapping("/requests/reject")
     public String rejectRequest(@ModelAttribute RequestDto requestDto) {
         Long requestId = requestDto.getRequestId();

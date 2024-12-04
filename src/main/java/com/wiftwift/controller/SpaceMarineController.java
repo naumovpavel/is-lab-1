@@ -5,6 +5,7 @@ import com.wiftwift.dto.SetChapterDto;
 import com.wiftwift.entity.*;
 import com.wiftwift.service.CoordinatesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -124,6 +126,7 @@ public class SpaceMarineController {
 
     
     @PostMapping("/add")
+    @Transactional
     public String addSpaceMarine(@ModelAttribute SpaceMarine spaceMarine, Authentication authentication) {
         String username = authentication.getName();
         User user = userService.findByUsername(username).orElseThrow();
@@ -147,9 +150,9 @@ public class SpaceMarineController {
 
     
     @PostMapping("/edit")
+    @Transactional
     public String updateSpaceMarine(@ModelAttribute SpaceMarine spaceMarine, Authentication authentication, Model model) {
         try {
-
             SpaceMarine oldSpaceMarine = spaceMarineService.getSpaceMarineById(spaceMarine.getId());
 
             String username = authentication.getName();
@@ -161,11 +164,14 @@ public class SpaceMarineController {
 
             spaceMarineService.saveSpaceMarine(spaceMarine);
             return "redirect:/space-marines";
-        }  catch (java.lang.NullPointerException e) {
-            model.addAttribute("error", "Упс, кто-то удалил");
+        } catch (AccessDeniedException e) {
+            model.addAttribute("error", "У вас нет прав!");
             return "error";
-        }  catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
+            return "error";
+        } catch (Exception e) {
+            model.addAttribute("error", "Что то пошло не так. Пожалуйста, попробуйте еще раз позже.");
             return "error";
         }
     }
@@ -186,6 +192,7 @@ public class SpaceMarineController {
         return "set-chapter";
     }
 
+    @Transactional
     @PostMapping(value = "/setChapter", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public String setChapter(
             @RequestParam(name = "spaceMarineID") int spaceMarineID,
@@ -206,6 +213,7 @@ public class SpaceMarineController {
         return "redirect:/chapters";
     }
 
+    @Transactional
     @PostMapping("/unsetChapter/{id}")
     public String unsetChapter(
             @PathVariable("id") int id,
@@ -223,7 +231,7 @@ public class SpaceMarineController {
         return "redirect:/space-marines";
     }
 
-    
+    @Transactional
     @PostMapping("/delete/{id}")
     public String deleteSpaceMarine(@PathVariable("id") int id) {
         spaceMarineService.deleteSpaceMarine(id); 

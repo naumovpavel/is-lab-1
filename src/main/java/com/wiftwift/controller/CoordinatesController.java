@@ -1,14 +1,13 @@
 package com.wiftwift.controller;
 
-import com.wiftwift.entity.Chapter;
 import com.wiftwift.entity.Coordinates;
-import com.wiftwift.entity.SpaceMarine;
 import com.wiftwift.entity.User;
 import com.wiftwift.service.CoordinatesService;
 import com.wiftwift.service.SpaceMarineService;
 import com.wiftwift.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -73,6 +72,7 @@ public class CoordinatesController {
         return "create-coordinate";
     }
 
+    @Transactional
     @PostMapping("/new")
     public String createCoordinates(@Valid @ModelAttribute Coordinates coordinates, Authentication authentication) {
         String username = authentication.getName();
@@ -88,7 +88,8 @@ public class CoordinatesController {
 
         String username = authentication.getName();
         if (!coordinates.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to edit this Coordinates");
+            model.addAttribute("error", "У вас нет прав!");
+            return "error";
         }
 
         model.addAttribute("coordinate", coordinates);
@@ -97,6 +98,7 @@ public class CoordinatesController {
         return "edit-coordinate";
     }
 
+    @Transactional
     @PostMapping("/edit")
     public String updateCoordinates(@Valid @ModelAttribute Coordinates coordinates, Authentication authentication, Model model) {
         try {
@@ -113,16 +115,19 @@ public class CoordinatesController {
             coordinatesService.saveCoordinates(coordinates);
 
             return "redirect:/coordinates";
-        } catch (java.lang.NullPointerException e) {
-            model.addAttribute("error", "Упс, кто-то удалил");
+        } catch (AccessDeniedException e) {
+            model.addAttribute("error", "У вас нет прав!");
             return "error";
-        }  catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
+            return "error";
+        } catch (Exception e) {
+            model.addAttribute("error", "Что то пошло не так. Пожалуйста, попробуйте еще раз позже.");
             return "error";
         }
-
     }
 
+    @Transactional
     @PostMapping("/delete/{id}")
     public String deleteCoordinates(@PathVariable("id") int id, Authentication authentication, Model model) {
         try {
@@ -134,15 +139,17 @@ public class CoordinatesController {
             }
 
             coordinatesService.deleteCoordinates(id);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+
+            return "redirect:/coordinates";
+        } catch (AccessDeniedException e) {
+            model.addAttribute("error", "У вас нет прав!");
+            return "error";
+        } catch (DataIntegrityViolationException e) {
             model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
             return "error";
-
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", "Что то пошло не так. Пожалуйста, попробуйте еще раз позже.");
             return "error";
         }
-
-        return "redirect:/coordinates";
     }
 }

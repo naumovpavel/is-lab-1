@@ -3,6 +3,7 @@ package com.wiftwift.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -26,15 +27,11 @@ public class RegistrationController {
         return "register";  
     }
 
+    @Transactional
     @PostMapping("/register")
     public String registerUser(@ModelAttribute("user") User user) {
-        
         String passwordHash = passwordEncoder.encode(user.getPasswordHash());
-        
-        
         user.setPasswordHash(passwordHash);
-        
-        
         userRepository.save(user);
         return "redirect:/login";  
     }

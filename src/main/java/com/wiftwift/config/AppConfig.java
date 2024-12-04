@@ -40,15 +40,11 @@ public class AppConfig {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
         em.setPackagesToScan(new String[] { "com.wiftwift.entity" });
-
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
-
-        
         em.getJpaPropertyMap().put("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect"));
         em.getJpaPropertyMap().put("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
         em.getJpaPropertyMap().put("hibernate.show_sql", env.getProperty("spring.jpa.show-sql"));
-
         return em;
     }
 

@@ -1,7 +1,9 @@
 package com.wiftwift.controller;
 
 import com.wiftwift.entity.Coordinates;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -9,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
@@ -76,11 +79,14 @@ public class ChapterController {
 
     
     @GetMapping("/{chapterId}")
-    public String getSpaceMarinesByChapter(@PathVariable("chapterId") int chapterId, Model model,
+    public String getSpaceMarinesByChapter(
+            @PathVariable("chapterId") int chapterId,
+            Model model,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "sortBy", defaultValue = "name") String sortBy,
-            @RequestParam(name = "sortDirection", defaultValue = "asc") String sortDirection) {
+            @RequestParam(name = "sortDirection", defaultValue = "asc"
+        ) String sortDirection) {
         return "redirect:/space-marines/chapter/" + chapterId + "?page=" + page + "&size=" + size + "&sortBy=" + sortBy
                 + "&sortDirection=" + sortDirection;
     }
@@ -91,6 +97,7 @@ public class ChapterController {
         return "create-chapter";
     }
 
+    @Transactional
     @PostMapping("/new")
     public String createChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication) {
         String username = authentication.getName();
@@ -105,7 +112,8 @@ public class ChapterController {
         Chapter chapter = chapterService.getChapterById(id);
         String username = authentication.getName();
         if (!chapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
-            throw new AccessDeniedException("You do not have permission to edit this chapter");
+            model.addAttribute("error", "У вас нет прав!");
+            return "error";
         }
 
         model.addAttribute("chapter", chapter);
@@ -113,34 +121,43 @@ public class ChapterController {
         return "edit-chapter";
     }
 
+    @Transactional
     @PostMapping("/edit")
     public String updateChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication, Model model) {
         try {
             Chapter oldChapter = chapterService.getChapterById(chapter.getId());
 
             String username = authentication.getName();
-            if (!oldChapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+            if (!oldChapter.getOwner().getUsername().equals(username) && !userService.isAdmin(username)) {
                 throw new AccessDeniedException("You do not have permission to edit this chapter");
             }
 
             chapter.setOwner(oldChapter.getOwner());
             chapterService.saveChapter(chapter);
 
+            // Redirect to the chapters page after successful update
             return "redirect:/chapters";
-        }  catch (java.lang.NullPointerException e) {
-            model.addAttribute("error", "Упс, кто-то удалил");
+
+        } catch (EntityNotFoundException e) {
+            model.addAttribute("error", "Данный объект не найден");
             return "error";
-        }  catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+        } catch (AccessDeniedException e) {
+            model.addAttribute("error", "У вас нет прав!");
+            return "error";
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
+            return "error";
+        } catch (Exception e) {
+            model.addAttribute("error", "Что то пошло не так. Пожалуйста, попробуйте еще раз позже.");
             return "error";
         }
     }
 
+    @Transactional
     @PostMapping("/delete/{id}")
     public String deleteChapter(@PathVariable("id") int id, Authentication authentication, Model model) {
         try {
             Chapter chapter = chapterService.getChapterById(id);
-
 
             String username = authentication.getName();
             if (!chapter.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
@@ -148,14 +165,16 @@ public class ChapterController {
             }
 
             chapterService.deleteChapter(id);
-
             return "redirect:/chapters";
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+
+        } catch (AccessDeniedException e) {
+            model.addAttribute("error", "У вас нет прав!");
+            return "error";
+        } catch (DataIntegrityViolationException e) {
             model.addAttribute("error", "Не возвожно удалить, используется в других объектах");
             return "error";
-
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", "Что то пошло не так. Пожалуйста, попробуйте еще раз позже.");
             return "error";
         }
     }

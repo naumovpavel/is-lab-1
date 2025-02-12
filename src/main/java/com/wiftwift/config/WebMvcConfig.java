@@ -7,6 +7,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.*;
@@ -16,6 +17,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.spring6.view.ThymeleafViewResolver;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
+import jakarta.servlet.MultipartConfigElement;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +27,21 @@ import java.util.List;
 @ComponentScan(basePackages = "com.wiftwift")
 @EnableWebMvc
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Bean
+    public StandardServletMultipartResolver multipartResolver() {
+        return new StandardServletMultipartResolver();
+    }
+
+    @Bean
+    public MultipartConfigElement multipartConfigElement() {
+        return new MultipartConfigElement(
+            System.getProperty("java.io.tmpdir"),
+            10 * 1024 * 1024, // max file size 10MB
+            10 * 1024 * 1024, // max request size 10MB
+            0 // file size threshold
+        );
+    }
 
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {

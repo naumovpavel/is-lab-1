@@ -11,7 +11,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
 
-
 @Service
 public class ChapterService {
 
@@ -29,14 +28,17 @@ public class ChapterService {
         };
     }
 
-    public Chapter saveChapter(Chapter chapter) {
+    public Chapter saveChapter(Chapter chapter) throws Exception {
+        if (chapterRepository.existsByName(chapter.getName())) {
+            throw new Exception("Chapter with name " + chapter.getName() + " already exists");
+        }
         var savedChapter = chapterRepository.save(chapter);
         template.convertAndSend("/topic/chapters", savedChapter);
         return savedChapter;
     }
 
     public Chapter getChapterById(int chapterId) {
-        return chapterRepository.findById(chapterId).orElse(null); 
+        return chapterRepository.findById(chapterId).orElse(null);
     }
 
     public void deleteChapter(int chapterId) {

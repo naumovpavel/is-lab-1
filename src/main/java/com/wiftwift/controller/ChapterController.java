@@ -1,6 +1,5 @@
 package com.wiftwift.controller;
 
-import com.wiftwift.entity.Coordinates;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,7 +15,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import com.wiftwift.entity.Chapter;
-import com.wiftwift.entity.SpaceMarine;
 import com.wiftwift.entity.User;
 import com.wiftwift.service.ChapterService;
 import com.wiftwift.service.SpaceMarineService;
@@ -99,11 +97,16 @@ public class ChapterController {
 
     @Transactional
     @PostMapping("/new")
-    public String createChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication) {
+    public String createChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication, Model model) {
         String username = authentication.getName();
         User user = userService.findByUsername(username).orElseThrow();
         chapter.setOwner(user);
-        chapterService.saveChapter(chapter);
+        try {
+            chapterService.saveChapter(chapter);
+        } catch (Exception e) {
+            model.addAttribute("error", "Не сраслось. Причина: " + e.getMessage());
+            return "error";
+        }
         return "redirect:/chapters";
     }
 

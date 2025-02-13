@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -34,14 +35,14 @@ public class ImportService {
     private final XmlMapper xmlMapper = new XmlMapper();
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void processImport(MultipartFile file, String username, int concurrency) throws Exception {
+    public void processImport(InputStream file, String username, int concurrency) throws Exception {
         ImportAttempt attempt = new ImportAttempt();
         attempt.setOwner(userService.findByUsername(username).orElseThrow());
         attempt.setNewObjectsCounter(0);
 
         List<Callable<Void>> tasks = new ArrayList<>();
 
-        JsonNode rootNode = xmlMapper.readTree(file.getInputStream());
+        JsonNode rootNode = xmlMapper.readTree(file);
 
         List<Chapter> parsedChapters = new ArrayList<>();
         if (rootNode.has("chapters")) {

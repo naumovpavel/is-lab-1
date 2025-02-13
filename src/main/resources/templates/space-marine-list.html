@@ -124,9 +124,9 @@
         <span>Страница <strong th:text="${spaceMarinePage.number + 1}"></strong> из <strong th:id = "last-page" th:text="${spaceMarinePage.totalPages}"></strong></span>
         <br/>
         <a th:href='@{/space-marines?page=0}'>Первая</a>
-        <a th:href="@{/space-marines?page={page}(page=${chapterPage.number - 1})}" th:if="${spaceMarinePage.hasPrevious()}">Предыдущая</a>
-        <a th:href="@{/space-marines?page={page}(page=${chapterPage.number + 1})}" th:if="${spaceMarinePage.hasNext()}">Следующая</a>
-        <a th:href="@{/space-marines?page={page}(page=${chapterPage.totalPages - 1})}" th:if="${spaceMarinePage.hasNext()}">Последняя</a>
+        <a th:href="@{/space-marines?page={page}(page=${spaceMarinePage.number - 1})}" th:if="${spaceMarinePage.hasPrevious()}">Предыдущая</a>
+        <a th:href="@{/space-marines?page={page}(page=${spaceMarinePage.number + 1})}" th:if="${spaceMarinePage.hasNext()}">Следующая</a>
+        <a th:href="@{/space-marines?page={page}(page=${spaceMarinePage.totalPages - 1})}" th:if="${spaceMarinePage.hasNext()}">Последняя</a>
     </div>
     
     <a href="/space-marines/add">Add new</a>

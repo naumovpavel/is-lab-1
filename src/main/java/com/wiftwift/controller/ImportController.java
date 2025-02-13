@@ -1,6 +1,11 @@
 package com.wiftwift.controller;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -9,7 +14,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.validation.Valid;
+
+import com.wiftwift.entity.Chapter;
+import com.wiftwift.entity.User;
 import com.wiftwift.service.ImportService;
+import com.wiftwift.util.UniqueNameException;
 
 @Controller
 @RequestMapping("/import")
@@ -32,14 +42,22 @@ public class ImportController {
     public String handleFileUpload(@RequestParam(name="file") MultipartFile file,
             @AuthenticationPrincipal UserDetails userDetails, Model model) {
 
-        System.out.println("handleFileUpload");
         try {
-            importService.processImport(file, userDetails.getUsername(), 3);
+            importService.processImport(file.getInputStream(), userDetails.getUsername(), 3);
         } catch (Exception e) {
-            System.err.println("Error processing import: " + e.getMessage());
             model.addAttribute("error", "Что ты будешь делать, если не получится импортировать из файла? Сиять. \n Причина: " + e.getMessage());
             return "error";
         }
         return "redirect:/import-attempts/my";
+    }
+
+    @PostMapping("/plain")
+    public ResponseEntity<String> handleFileUpload(@Valid @RequestBody String data, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            importService.processImport(new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)), userDetails.getUsername(), 3);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("");
+        }
+        return ResponseEntity.ok("ok");
     }
 }

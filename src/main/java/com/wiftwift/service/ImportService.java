@@ -40,8 +40,6 @@ public class ImportService {
         attempt.setOwner(userService.findByUsername(username).orElseThrow());
         attempt.setNewObjectsCounter(0);
 
-        List<Callable<Void>> tasks = new ArrayList<>();
-
         JsonNode rootNode = xmlMapper.readTree(file);
 
         List<Chapter> parsedChapters = new ArrayList<>();
@@ -88,8 +86,11 @@ public class ImportService {
             }
         }
 
+        List<Callable<Void>> chapterTasks = new ArrayList<>();
+        List<Callable<Void>> spaceMarineTasks = new ArrayList<>();
+
         for (Chapter chapter : parsedChapters) {
-            tasks.add(() -> {
+            chapterTasks.add(() -> {
                 chapter.setOwner(attempt.getOwner());
                 chapterService.saveChapter(chapter);
                 synchronized (attempt) {
@@ -100,7 +101,7 @@ public class ImportService {
         }
 
         for (SpaceMarine marine : parsedMarines) {
-            tasks.add(() -> {
+            spaceMarineTasks.add(() -> {
                 marine.setOwner(attempt.getOwner());
                 if (marine.getCoordinates() != null) {
                     marine.getCoordinates().setOwner(attempt.getOwner());
@@ -115,7 +116,11 @@ public class ImportService {
 
         ExecutorService executor = Executors.newFixedThreadPool(concurrency);
         try {
-            List<Future<Void>> futures = executor.invokeAll(tasks);
+            List<Future<Void>> futures = executor.invokeAll(chapterTasks);
+            for (Future<Void> future : futures) {
+                future.get();
+            }
+            futures = executor.invokeAll(spaceMarineTasks);
             for (Future<Void> future : futures) {
                 future.get();
             }

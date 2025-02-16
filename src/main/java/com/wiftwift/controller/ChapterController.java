@@ -1,6 +1,5 @@
 package com.wiftwift.controller;
 
-import com.wiftwift.entity.Coordinates;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -8,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -16,11 +16,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import com.wiftwift.entity.Chapter;
-import com.wiftwift.entity.SpaceMarine;
 import com.wiftwift.entity.User;
 import com.wiftwift.service.ChapterService;
 import com.wiftwift.service.SpaceMarineService;
 import com.wiftwift.service.UserService;
+import com.wiftwift.util.UniqueNameException;
+
 import java.util.List;
 
 @Controller
@@ -97,14 +98,35 @@ public class ChapterController {
         return "create-chapter";
     }
 
-    @Transactional
     @PostMapping("/new")
-    public String createChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication) {
+    public String createChapter(@Valid @ModelAttribute Chapter chapter, Authentication authentication, Model model) {
         String username = authentication.getName();
         User user = userService.findByUsername(username).orElseThrow();
         chapter.setOwner(user);
-        chapterService.saveChapter(chapter);
+        try {
+            chapterService.saveChapter(chapter);
+        } catch (Exception e) {
+            model.addAttribute("error", "Не сраслось. Причина: " + e.getMessage());
+            return "error";
+        }
         return "redirect:/chapters";
+    }
+
+    @PostMapping("/api/new")
+    public ResponseEntity<String> createChapter(@Valid @RequestBody  Chapter chapter, Authentication authentication) {
+        System.out.println("start");
+        String username = authentication.getName();
+        User user = userService.findByUsername(username).orElseThrow();
+        chapter.setOwner(user);
+        try {
+            chapterService.saveChapter(chapter);
+        } catch (UniqueNameException e) {
+            return ResponseEntity.status(400).body("");
+        }  catch (Exception e) {
+            return ResponseEntity.status(500).body("");
+        }
+        System.out.println("saved" + chapter.getName());
+        return ResponseEntity.ok("Chapter created successfully");
     }
 
     @GetMapping("/edit/{id}")

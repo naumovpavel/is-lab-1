@@ -25,6 +25,10 @@
         </div>
 
         <div>
+            <p><a href="#" th:href="@{/import}">Загрузить файл </a></p>
+        </div>
+
+        <div>
             <a href="#" th:href="@{/space-marines}">Space marines</a>
         </div>
 
@@ -35,6 +39,12 @@
         <div>
             <a href="#" th:href="@{/coordinates}">coordinates</a>
         </div>
+
+        <div>
+            <a th:href="@{/import-attempts/my}">Мои история импорта</a>
+            <a th:if="${isAdmin}" th:href="@{/import-attempts/all}">Полная история импорта</a>
+        </div>
+
 
         <div>
             <a href="#" th:href="@{/space-marines/avgHealth}">Avg health</a>

@@ -11,8 +11,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -22,6 +25,10 @@ import com.wiftwift.service.ChapterService;
 import com.wiftwift.service.SpaceMarineService;
 import com.wiftwift.service.UserService;
 
+import jakarta.validation.Valid;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -135,6 +142,20 @@ public class SpaceMarineController {
         return "redirect:/space-marines"; 
     }
 
+    @PostMapping("/api/add")
+    @Transactional
+    public ResponseEntity<String> addJsonSpaceMarine(@Valid @RequestBody SpaceMarine spaceMarine, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User user = userService.findByUsername(username).orElseThrow();
+            spaceMarine.setOwner(user);
+            spaceMarineService.saveSpaceMarine(spaceMarine);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("");
+        }
+        return ResponseEntity.ok("ok");
+    }
+
     
     @GetMapping("/edit/{id}")
     public String showEditSpaceMarineForm(@PathVariable("id") int id, Model model, Authentication authentication) {
@@ -174,6 +195,32 @@ public class SpaceMarineController {
             model.addAttribute("error", "Что то пошло не так. Пожалуйста, попробуйте еще раз позже.");
             return "error";
         }
+    }
+
+    @PostMapping("/api/edit")
+    @Transactional
+    public ResponseEntity<String> updateSpaceMarine(@Valid @RequestBody SpaceMarine spaceMarine, Authentication authentication) {
+        try {
+            SpaceMarine oldSpaceMarine = spaceMarineService.getSpaceMarineById(spaceMarine.getId());
+
+            String username = authentication.getName();
+            if (!oldSpaceMarine.getOwner().getUsername().equals(username) && !userService.isAdmin(authentication.getName())) {
+                throw new AccessDeniedException("You do not have permission to edit this chapter");
+            }
+
+            if (spaceMarine.getCoordinates().getId() != null) {
+                spaceMarine.setCoordinates(coordinatesService.getCoordinatesById(spaceMarine.getCoordinates().getId()));
+            }
+
+            spaceMarine.setOwner(oldSpaceMarine.getOwner());
+
+            spaceMarineService.saveSpaceMarine(spaceMarine);
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(400).body("");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+        return ResponseEntity.ok("ok");
     }
 
     @GetMapping("/setChapter/{id}")
@@ -236,6 +283,17 @@ public class SpaceMarineController {
     public String deleteSpaceMarine(@PathVariable("id") int id) {
         spaceMarineService.deleteSpaceMarine(id); 
         return "redirect:/space-marines"; 
+    }
+
+    @Transactional
+    @PostMapping("/api/delete/{id}")
+    public ResponseEntity<String> deleteAPISpaceMarine(@PathVariable("id") int id) {
+        try {
+            spaceMarineService.deleteSpaceMarine(id); 
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("");
+        }
+        return ResponseEntity.ok("ok");
     }
 
     @GetMapping("/uniqueHealth")

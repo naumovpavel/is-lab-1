@@ -30,7 +30,7 @@ public class SpaceMarine {
     @Temporal(TemporalType.TIMESTAMP)
     private Date creationDate = new Date();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "coordinates_id", nullable = false)
     @NotNull(message = "Поле coordinates не может быть null")
     private Coordinates coordinates;

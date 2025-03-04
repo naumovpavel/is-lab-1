@@ -1,16 +1,16 @@
 package com.wiftwift.service;
 
 import com.wiftwift.dto.DeleteEventDto;
+import com.wiftwift.entity.Chapter;
+import com.wiftwift.repository.ChapterRepository;
+import com.wiftwift.util.UniqueNameException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import com.wiftwift.entity.Chapter;
-import com.wiftwift.repository.ChapterRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
 
 @Service
 public class ChapterService {
@@ -29,14 +29,18 @@ public class ChapterService {
         };
     }
 
-    public Chapter saveChapter(Chapter chapter) {
+
+    public Chapter saveChapter(Chapter chapter) throws Exception {
+        if (chapterRepository.existsByName(chapter.getName())) {
+            throw new UniqueNameException("Chapter with name " + chapter.getName() + " already exists");
+        }
         var savedChapter = chapterRepository.save(chapter);
         template.convertAndSend("/topic/chapters", savedChapter);
         return savedChapter;
     }
 
     public Chapter getChapterById(int chapterId) {
-        return chapterRepository.findById(chapterId).orElse(null); 
+        return chapterRepository.findById(chapterId).orElse(null);
     }
 
     public void deleteChapter(int chapterId) {
@@ -50,4 +54,12 @@ public class ChapterService {
         return chapterRepository.findAll();
     }
 
+    public void saveChapters(List<Chapter> parsedChapters) throws Exception {
+        for (Chapter chapter : parsedChapters) {
+            if (chapterRepository.existsByName(chapter.getName())) {
+                throw new UniqueNameException("Chapter with name " + chapter.getName() + " already exists");
+            }
+        }
+        chapterRepository.saveAll(parsedChapters);
+    }
 }

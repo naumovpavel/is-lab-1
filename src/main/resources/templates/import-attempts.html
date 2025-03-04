@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Import history</title>
+        <link th:href="@{/resources/style.css}" rel="stylesheet" />
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script th:src="@{/resources/load-chapter.js}"></script>
+        <script th:src="@{/resources/load-coordinates.js}"></script>
+    </head>
+<body>
+    <div class="header">
+        <a href="/home">Главная</a>
+        <span th:text="${username}"></span>
+        <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+    
+    <h1>История импорта</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th><a>Дата</a></th>
+                <th><a>Владелец</a></th>
+                <th><a>Статус</a></th>
+                <th><a>Новых объектов</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="attempt : ${attemptsPage.content}">
+                <td th:text="${attempt.id}"></td>
+                <td th:text="${attempt.creationDate}"></td>
+                <td th:text="${attempt.owner.username}"></td>
+                <td>
+                    <span th:if="${attempt.isAccepted}" class="status-success">Успешно</span>
+                    <span th:unless="${attempt.isAccepted}" class="status-error">Ошибка</span>
+                </td>
+                <td th:text="${attempt.newObjectsCounter}"></td>
+                <td>
+                    <a th:if="${attempt.isAccepted}" th:href="@{/import-attempts/{id}(id=${attempt.id})}">Подробнее</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="pagination" th:if="${attemptsPage.totalPages > 1}">
+        <span>Страница <strong th:text="${attemptsPage.number + 1}"></strong> из <strong th:text="${attemptsPage.totalPages}"></strong></span>
+        <br/>
+        <a th:href="@{${currentPath}(page=0,sortBy=${sortBy},sortDirection=${sortDirection})}">Первая</a>
+        <a th:if="${attemptsPage.hasPrevious()}" 
+           th:href="@{${currentPath}(page=${attemptsPage.number - 1},sortBy=${sortBy},sortDirection=${sortDirection})}">Предыдущая</a>
+        <a th:if="${attemptsPage.hasNext()}" 
+           th:href="@{${currentPath}(page=${attemptsPage.number + 1},sortBy=${sortBy},sortDirection=${sortDirection})}">Следующая</a>
+        <a th:href="@{${currentPath}(page=${attemptsPage.totalPages - 1},sortBy=${sortBy},sortDirection=${sortDirection})}">Последняя</a>
+    </div>
+
+</body>
+</html> 

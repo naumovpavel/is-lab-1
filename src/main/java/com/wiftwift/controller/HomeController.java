@@ -11,7 +11,7 @@ import java.util.Collection;
 @Controller
 public class HomeController {
 
-    @GetMapping("/")
+    @GetMapping("/home")
     public String home(Authentication authentication, Model model) {
         if (authentication != null) {
             String username = authentication.getName(); 

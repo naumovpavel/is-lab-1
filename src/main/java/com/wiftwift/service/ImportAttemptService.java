@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.wiftwift.entity.ImportAttempt;
 import com.wiftwift.repository.ImportAttemptsRepository;
 
+import java.util.Optional;
+
 @Service
 public class ImportAttemptService {
     @Autowired
@@ -26,5 +28,9 @@ public class ImportAttemptService {
 
     public Page<ImportAttempt> getAllAttempts(Pageable pageable) {
         return importAttemptsRepository.findAll(pageable);
+    }
+
+    public Optional<ImportAttempt> getById(Long id) {
+        return importAttemptsRepository.findById(id);
     }
 }

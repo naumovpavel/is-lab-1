@@ -1,17 +1,14 @@
 package com.wiftwift.service;
 
 import com.wiftwift.dto.DeleteEventDto;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 import com.wiftwift.entity.Chapter;
 import com.wiftwift.repository.ChapterRepository;
 import com.wiftwift.util.UniqueNameException;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -32,7 +29,7 @@ public class ChapterService {
         };
     }
 
-    @Transactional(isolation= Isolation.SERIALIZABLE)
+
     public Chapter saveChapter(Chapter chapter) throws Exception {
         if (chapterRepository.existsByName(chapter.getName())) {
             throw new UniqueNameException("Chapter with name " + chapter.getName() + " already exists");
@@ -57,4 +54,12 @@ public class ChapterService {
         return chapterRepository.findAll();
     }
 
+    public void saveChapters(List<Chapter> parsedChapters) throws Exception {
+        for (Chapter chapter : parsedChapters) {
+            if (chapterRepository.existsByName(chapter.getName())) {
+                throw new UniqueNameException("Chapter with name " + chapter.getName() + " already exists");
+            }
+        }
+        chapterRepository.saveAll(parsedChapters);
+    }
 }

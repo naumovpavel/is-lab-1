@@ -1,20 +1,32 @@
 package com.wiftwift.controller;
 
+import com.wiftwift.entity.ImportAttempt;
+import com.wiftwift.entity.User;
+import com.wiftwift.service.ImportAttemptService;
+import com.wiftwift.service.MinioService;
+import com.wiftwift.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.wiftwift.entity.ImportAttempt;
-import com.wiftwift.entity.User;
-import com.wiftwift.service.ImportAttemptService;
-import com.wiftwift.service.UserService;
+import java.io.InputStream;
+
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Controller
 @RequestMapping("/import-attempts")
@@ -25,6 +37,9 @@ public class ImportAttemptController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private MinioService minioService;
 
     @GetMapping("/my")
     public String getUserAttempts(
@@ -82,5 +97,30 @@ public class ImportAttemptController {
         model.addAttribute("isAdmin", true);
 
         return "import-attempts";
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable("id") Long id) {
+        // Получаем попытку импорта
+        ImportAttempt attempt = importAttemptService.getById(id).orElseThrow(
+                () -> new ResponseStatusException(NOT_FOUND, "Import attempt not found")
+        );
+
+        // Проверяем статус accepted
+        if (!attempt.isAccepted()) {
+            throw new ResponseStatusException(NOT_FOUND, "Attempt not accepted");
+        }
+
+        // Получаем файл из Minio
+        try {
+            InputStream fileStream = minioService.getFile(attempt.getFilename());
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_XML)
+                    .header("Content-Disposition", "attachment; filename=\"" + attempt.getFilename() + "\"")
+                    .body(new InputStreamResource(fileStream));
+        } catch (Exception e) {
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Error retrieving file", e);
+        }
     }
 }

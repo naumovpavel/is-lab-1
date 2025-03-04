@@ -10,7 +10,7 @@
     </head>
 <body>
     <div class="header">
-        <a href="/">Главная</a>
+        <a href="/home">Главная</a>
         <span th:text="${username}"></span>
         <form id="logout-form" action="#" th:action="@{/logout}" method="post" style="display: inline;">
             <button type="submit">Logout</button>
@@ -23,10 +23,10 @@
         <thead>
             <tr>
                 <th>Id</th>
-                <th><a th:href="@{${currentPath}(sortBy='timestamp',sortDirection=${sortDirection == 'asc' ? 'desc' : 'asc'})}">Дата</a></th>
-                <th><a th:href="@{${currentPath}(sortBy='owner.username',sortDirection=${sortDirection == 'asc' ? 'desc' : 'asc'})}">Владелец</a></th>
-                <th><a th:href="@{${currentPath}(sortBy='isAccepted',sortDirection=${sortDirection == 'asc' ? 'desc' : 'asc'})}">Статус</a></th>
-                <th><a th:href="@{${currentPath}(sortBy='newObjectsCounter',sortDirection=${sortDirection == 'asc' ? 'desc' : 'asc'})}">Новых объектов</a></th>
+                <th><a>Дата</a></th>
+                <th><a>Владелец</a></th>
+                <th><a>Статус</a></th>
+                <th><a>Новых объектов</a></th>
             </tr>
         </thead>
         <tbody>
@@ -39,6 +39,9 @@
                     <span th:unless="${attempt.isAccepted}" class="status-error">Ошибка</span>
                 </td>
                 <td th:text="${attempt.newObjectsCounter}"></td>
+                <td>
+                    <a th:if="${attempt.isAccepted}" th:href="@{/import-attempts/{id}(id=${attempt.id})}">Подробнее</a>
+                </td>
             </tr>
         </tbody>
     </table>

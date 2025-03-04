@@ -1,7 +1,7 @@
 package com.wiftwift.service;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.wiftwift.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,17 +9,13 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.UUID;
+
 
 @Service
 public class ImportService {
-
     @Autowired
     private ChapterService chapterService;
 
@@ -32,107 +28,97 @@ public class ImportService {
     @Autowired
     private ImportAttemptService importAttemptService;
 
+    @Autowired
+    private MinioService minioService;
+
     private final XmlMapper xmlMapper = new XmlMapper();
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void processImport(InputStream file, String username, int concurrency) throws Exception {
+    @Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = Exception.class)
+    public void importFromFile(MultipartFile file, String username, String fileName) throws Exception {
+        executeImport(file, username, fileName);
+        System.out.println("ДО");
+        Thread.sleep(10 * 1000);
+        System.out.println("После");
+    }
+
+    public void executeImport(MultipartFile file, String username, String fileName ) throws Exception {
         ImportAttempt attempt = new ImportAttempt();
         attempt.setOwner(userService.findByUsername(username).orElseThrow());
         attempt.setNewObjectsCounter(0);
+        attempt.setFilename(fileName);
+        try {
+            JsonNode rootNode = xmlMapper.readTree(file.getInputStream());
 
-        JsonNode rootNode = xmlMapper.readTree(file);
-
-        List<Chapter> parsedChapters = new ArrayList<>();
-        if (rootNode.has("chapters")) {
-            JsonNode chaptersNode = rootNode.get("chapters");
-            if (chaptersNode.isArray()) {
-                for (JsonNode chapterNode : chaptersNode) {
-                    Chapter chapter = parseChapter(chapterNode);
-                    parsedChapters.add(chapter);
-                }
-            } else if (chaptersNode.has("chapter")) {
-                JsonNode chapterSubNode = chaptersNode.get("chapter");
-                if (chapterSubNode.isArray()) {
-                    for (JsonNode chapterNode : chapterSubNode) {
+            List<Chapter> parsedChapters = new ArrayList<>();
+            if (rootNode.has("chapters")) {
+                JsonNode chaptersNode = rootNode.get("chapters");
+                if (chaptersNode.isArray()) {
+                    for (JsonNode chapterNode : chaptersNode) {
                         Chapter chapter = parseChapter(chapterNode);
                         parsedChapters.add(chapter);
                     }
-                } else {
-                    Chapter chapter = parseChapter(chapterSubNode);
-                    parsedChapters.add(chapter);
+                } else if (chaptersNode.has("chapter")) {
+                    JsonNode chapterSubNode = chaptersNode.get("chapter");
+                    if (chapterSubNode.isArray()) {
+                        for (JsonNode chapterNode : chapterSubNode) {
+                            Chapter chapter = parseChapter(chapterNode);
+                            parsedChapters.add(chapter);
+                        }
+                    } else {
+                        Chapter chapter = parseChapter(chapterSubNode);
+                        parsedChapters.add(chapter);
+                    }
                 }
             }
-        }
 
-        List<SpaceMarine> parsedMarines = new ArrayList<>();
-        if (rootNode.has("spaceMarines")) {
-            JsonNode marinesNode = rootNode.get("spaceMarines");
-            if (marinesNode.isArray()) {
-                for (JsonNode marineNode : marinesNode) {
-                    SpaceMarine marine = parseSpaceMarine(marineNode, parsedChapters);
-                    parsedMarines.add(marine);
-                }
-            } else if (marinesNode.has("spaceMarine")) {
-                JsonNode marineSubNode = marinesNode.get("spaceMarine");
-                if (marineSubNode.isArray()) {
-                    for (JsonNode marineNode : marineSubNode) {
+            List<SpaceMarine> parsedMarines = new ArrayList<>();
+            if (rootNode.has("spaceMarines")) {
+                JsonNode marinesNode = rootNode.get("spaceMarines");
+                if (marinesNode.isArray()) {
+                    for (JsonNode marineNode : marinesNode) {
                         SpaceMarine marine = parseSpaceMarine(marineNode, parsedChapters);
                         parsedMarines.add(marine);
                     }
-                } else {
-                    SpaceMarine marine = parseSpaceMarine(marineSubNode, parsedChapters);
-                    parsedMarines.add(marine);
+                } else if (marinesNode.has("spaceMarine")) {
+                    JsonNode marineSubNode = marinesNode.get("spaceMarine");
+                    if (marineSubNode.isArray()) {
+                        for (JsonNode marineNode : marineSubNode) {
+                            SpaceMarine marine = parseSpaceMarine(marineNode, parsedChapters);
+                            parsedMarines.add(marine);
+                        }
+                    } else {
+                        SpaceMarine marine = parseSpaceMarine(marineSubNode, parsedChapters);
+                        parsedMarines.add(marine);
+                    }
                 }
             }
-        }
 
-        List<Callable<Void>> chapterTasks = new ArrayList<>();
-        List<Callable<Void>> spaceMarineTasks = new ArrayList<>();
-
-        for (Chapter chapter : parsedChapters) {
-            chapterTasks.add(() -> {
+            for (Chapter chapter : parsedChapters) {
                 chapter.setOwner(attempt.getOwner());
-                chapterService.saveChapter(chapter);
-                synchronized (attempt) {
-                    attempt.setNewObjectsCounter(attempt.getNewObjectsCounter() + 1);
-                }
-                return null;
-            });
-        }
-
-        for (SpaceMarine marine : parsedMarines) {
-            spaceMarineTasks.add(() -> {
+            }
+            for (SpaceMarine marine : parsedMarines) {
                 marine.setOwner(attempt.getOwner());
                 if (marine.getCoordinates() != null) {
                     marine.getCoordinates().setOwner(attempt.getOwner());
                 }
-                spaceMarineService.saveSpaceMarine(marine);
-                synchronized (attempt) {
-                    attempt.setNewObjectsCounter(attempt.getNewObjectsCounter() + 1);
-                }
-                return null;
-            });
-        }
-
-        ExecutorService executor = Executors.newFixedThreadPool(concurrency);
-        try {
-            List<Future<Void>> futures = executor.invokeAll(chapterTasks);
-            for (Future<Void> future : futures) {
-                future.get();
             }
-            futures = executor.invokeAll(spaceMarineTasks);
-            for (Future<Void> future : futures) {
-                future.get();
-            }
+            chapterService.saveChapters(parsedChapters);
+            attempt.setNewObjectsCounter(attempt.getNewObjectsCounter() + parsedChapters.size());
+            spaceMarineService.saveSpaceMarines(parsedMarines);
+            attempt.setNewObjectsCounter(attempt.getNewObjectsCounter() + parsedMarines.size());
+            minioService.uploadFile(file, fileName);
+            // throw new RuntimeException("Ooopps");
             attempt.setAccepted(true);
+            importAttemptService.save(attempt);
         } catch (Exception e) {
+            System.out.println("Expection minio");
             attempt.setAccepted(false);
             attempt.setNewObjectsCounter(0);
-            throw e;
-        } finally {
-            executor.shutdown();
             importAttemptService.save(attempt);
+            minioService.deleteFile(fileName);
+            throw e;
         }
+
     }
 
     private Chapter parseChapter(JsonNode node) {
@@ -182,5 +168,14 @@ public class ImportService {
                     .orElseThrow(() -> new RuntimeException("Chapter not found: " + chapterName)));
         }
         return marine;
+    }
+
+
+    private void cleanupOnError(String tempFileName) {
+        try {
+            minioService.deleteFile(tempFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

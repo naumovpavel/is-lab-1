@@ -3,6 +3,7 @@ package com.wiftwift.entity;
 import java.util.Date;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
@@ -18,6 +19,8 @@ public class ImportAttempt {
     private User owner;
 
     private boolean isAccepted;
+
+    private String filename;
 
     private int newObjectsCounter;
     @Column(name = "creation_date", nullable = false, updatable = false)

@@ -66,4 +66,7 @@ public class SpaceMarineService {
         return spaceMarineRepository.findUniqueHealthValues();
     }
 
+    public void saveSpaceMarines(List<SpaceMarine> parsedMarines) {
+        spaceMarineRepository.saveAll(parsedMarines);
+    }
 }
